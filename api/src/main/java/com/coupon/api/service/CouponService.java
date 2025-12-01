@@ -44,6 +44,14 @@ public class CouponService {
 
     }
 
+    public PayloadResponse findById(Long id) throws ServiceException {
+
+        Coupon coupon = couponRepository.findById(id)
+                .orElseThrow(() -> new ServiceException("Cupom não encontrado com ID: " + id));
+
+        return toResponse(coupon);
+    }
+
     private PayloadResponse toResponse(Coupon coupon) {
         return new PayloadResponse(
                 coupon.getId(),
@@ -56,4 +64,6 @@ public class CouponService {
                 coupon.getRedeemed()
         );
     }
+
+
 }
