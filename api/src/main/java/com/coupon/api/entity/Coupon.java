@@ -43,7 +43,7 @@ public class Coupon {
     private Boolean published = false;
 
     @Column(nullable = false)
-    private Boolean redeemed = true;
+    private Boolean redeemed = false;
 
     @Column(nullable=false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

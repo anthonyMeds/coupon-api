@@ -9,8 +9,9 @@ public record PayloadResponse(
         String description,
         BigDecimal discountValue,
         LocalDateTime expirationDate,
+        String status,
         Boolean published,
-        Boolean redeemed,
-        String status
+        Boolean redeemed
+
 ) {
 }
