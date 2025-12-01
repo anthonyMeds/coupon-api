@@ -44,6 +44,21 @@ public class CouponService {
 
     }
 
+    public PayloadResponse deleteCoupon(Long id) throws ServiceException {
+
+        Coupon coupon = couponRepository.findById(id)
+                .orElseThrow(() -> new ServiceException("Cupom não encontrado com ID: " + id));
+        if (coupon.getStatus() == CouponStatus.DELETED) {
+            throw new ServiceException("O cupom já está deletado.");
+        }
+
+        coupon.setStatus(CouponStatus.DELETED);
+
+        Coupon updatedCoupon = couponRepository.save(coupon);
+
+        return toResponse(updatedCoupon);
+    }
+
     public PayloadResponse findById(Long id) throws ServiceException {
 
         Coupon coupon = couponRepository.findById(id)
@@ -51,6 +66,7 @@ public class CouponService {
 
         return toResponse(coupon);
     }
+
 
     private PayloadResponse toResponse(Coupon coupon) {
         return new PayloadResponse(
@@ -64,6 +80,7 @@ public class CouponService {
                 coupon.getRedeemed()
         );
     }
+
 
 
 }

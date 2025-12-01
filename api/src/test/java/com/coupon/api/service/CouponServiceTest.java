@@ -1,6 +1,7 @@
 package com.coupon.api.service;
 
 import com.coupon.api.config.exception.ServiceException;
+import com.coupon.api.dto.CouponStatus;
 import com.coupon.api.dto.PayloadRequest;
 import com.coupon.api.dto.PayloadResponse;
 import com.coupon.api.entity.Coupon;
@@ -12,10 +13,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -111,6 +114,61 @@ class CouponServiceTest {
         });
 
         assertTrue(exception.getMessage().contains("Já existe um cupom cadastrado com o código"));
+        verify(couponRepository, never()).save(any(Coupon.class));
+    }
+
+    @Test
+    @DisplayName("Deve realizar o soft delete de um cupom ATIVO com sucesso")
+    void deveDeletarCupomComSucesso() throws ServiceException {
+
+        when(couponRepository.findById(Mockito.any())).thenReturn(Optional.of(cupomCadastrado));
+
+        Coupon deletedCoupon = new Coupon();
+
+        deletedCoupon.setId(1L);
+        deletedCoupon.setCode(cupomCadastrado.getCode());
+        deletedCoupon.setStatus(CouponStatus.DELETED);
+        deletedCoupon.setExpirationDate(cupomCadastrado.getExpirationDate());
+        deletedCoupon.setDiscountValue(cupomCadastrado.getDiscountValue());
+
+        when(couponRepository.save(any(Coupon.class))).thenReturn(deletedCoupon);
+
+        PayloadResponse response = couponService.deleteCoupon(1l);
+
+        assertNotNull(response);
+        assertEquals(CouponStatus.DELETED.toString(), response.status());
+
+        verify(couponRepository, times(1)).findById(1L);
+        verify(couponRepository, times(1)).save(any(Coupon.class));
+    }
+
+    @Test
+    @DisplayName("Deve lançar ServiceException ao tentar deletar um cupom JÁ DELETADO")
+    void deveBarrarAoDeletarCupomJaDeletado() throws ServiceException {
+
+        cupomCadastrado.setStatus(CouponStatus.DELETED);
+
+        when(couponRepository.findById(1l)).thenReturn(Optional.of(cupomCadastrado));
+
+        ServiceException exception = assertThrows(ServiceException.class, () -> {
+            couponService.deleteCoupon(1l);
+        });
+
+        assertTrue(exception.getMessage().contains("O cupom já está deletado."));
+        verify(couponRepository, never()).save(any(Coupon.class));
+    }
+
+    @Test
+    @DisplayName("Deve lançar ServiceException quando o cupom NÃO FOR ENCONTRADO")
+    void deveBarrarDelecaoCasoNaoEncontrado() throws ServiceException {
+
+        when(couponRepository.findById(1l)).thenReturn(Optional.empty());
+
+        ServiceException exception = assertThrows(ServiceException.class, () -> {
+            couponService.deleteCoupon(1l);
+        });
+
+        assertTrue(exception.getMessage().contains("Cupom não encontrado com ID"));
         verify(couponRepository, never()).save(any(Coupon.class));
     }
 
